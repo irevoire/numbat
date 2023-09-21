@@ -1,6 +1,6 @@
 ### Physical dimensions
 
-dimension Angle = 1  # SI: plane angle
+dimension Angle  # SI: plane angle
 dimension SolidAngle = Angle^2
 
 dimension Length
@@ -23,9 +23,9 @@ dimension Power = Energy / Time = Force × Speed  # also: radiant flux
 dimension Pressure = Force / Area = Energy / Volume  # also: stress
 dimension Action = Energy × Time
 dimension MassDensity = Mass / Length^3
-dimension MomentOfInertia = Mass × Length^2
-dimension AngularMomentum = MomentOfInertia × Angle / Time
-dimension Torque = Length × Force  # also: moment of force
+dimension MomentOfInertia = Mass × Length^2 / Angle^2
+dimension AngularMomentum = MomentOfInertia × Angle / Time = Mass × Length^2 / Time / Angle
+dimension Torque = Length × Force / Angle  # also: moment of force
 dimension EnergyDensity = Energy / Volume
 
 dimension Current
@@ -43,7 +43,7 @@ dimension Inductance = MagneticFlux / Current
 dimension ChargeDensity = Charge / Volume
 dimension CurrentDensity = Current / Area
 dimension ElectricDipoleMoment = Charge × Length
-dimension MagneticDipoleMoment = Current × Area = Torque / MagneticFluxDensity
+dimension MagneticDipoleMoment = Current × Area #= Torque / MagneticFluxDensity
 dimension ElectricFieldStrength = Voltage / Length
 dimension ElectricPermittivity = Time^4 × Current^2 / Mass / Length^3
 dimension MagneticPermeability = Length × Mass / Time^2 / Current^2
