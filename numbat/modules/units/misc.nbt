@@ -33,6 +33,11 @@ unit kilogram_force: Force = 9.80665 newton
 @aliases(hp: short)
 unit horsepower: Power = 735.49875 W
 
+unit rev: Angle = 360°
+
+@aliases(RPM: short)
+unit rpm: Angle / Time = rev/min
+
 unit mmHg: Pressure = 133.322387415 pascal
 
 unit Hg: Force / Volume = mmHg / mm

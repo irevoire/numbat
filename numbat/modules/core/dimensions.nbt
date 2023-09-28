@@ -14,6 +14,8 @@ dimension Speed = Length / Time  # also: velocity
 dimension Acceleration = Length / Time^2
 dimension Jerk = Length / Time^3
 dimension FlowRate = Volume / Time
+dimension AngularFrequency = Angle / Time
+dimension AngularAcceleration = Angle / Time^2
 
 dimension Mass
 dimension Momentum = Mass × Speed
@@ -45,8 +47,8 @@ dimension CurrentDensity = Current / Area
 dimension ElectricDipoleMoment = Charge × Length
 dimension MagneticDipoleMoment = Current × Area #= Torque / MagneticFluxDensity
 dimension ElectricFieldStrength = Voltage / Length
-dimension ElectricPermittivity = Time^4 × Current^2 / Mass / Length^3
-dimension MagneticPermeability = Length × Mass / Time^2 / Current^2
+dimension ElectricPermittivity = Time^4 × Current^2 / Mass / Length^3 × Angle
+dimension MagneticPermeability = Length × Mass / Time^2 / Current^2 / Angle
 dimension Polarizability = ElectricDipoleMoment / ElectricFieldStrength = Current^2 × Time^4 / Mass
 
 dimension Temperature
