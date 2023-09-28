@@ -33,10 +33,11 @@ unit kilogram_force: Force = 9.80665 newton
 @aliases(hp: short)
 unit horsepower: Power = 735.49875 W
 
-unit rev: Angle = 360°
+@aliases(revolutions, rev: short)
+unit revolution: Angle = 360°
 
 @aliases(RPM: short)
-unit rpm: AngularFrequency = rev/min
+unit rpm: AngularFrequency = revolutions per minute
 
 unit mmHg: Pressure = 133.322387415 pascal
 
