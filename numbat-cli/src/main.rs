@@ -1,5 +1,6 @@
 mod ansi_formatter;
 mod completer;
+mod formatter;
 mod highlighter;
 
 use ansi_formatter::ansi_format;
@@ -29,6 +30,8 @@ use std::io::IsTerminal;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::{fs, thread};
+
+use formatter::run_formatter;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ExitStatus {
@@ -63,6 +66,10 @@ struct Args {
         action = clap::ArgAction::Append
     )]
     expression: Option<Vec<String>>,
+
+    /// Reformat your code in place.
+    #[arg(long, aliases = &["format"])]
+    fmt: bool,
 
     /// Do not load the prelude with predefined physical dimensions and units. This implies --no-init.
     #[arg(long)]
@@ -468,7 +475,14 @@ impl Cli {
 fn main() {
     let mut cli = Cli::new();
 
-    if let Err(e) = cli.run() {
+    if cli.args.fmt {
+        if let Some(file) = cli.args.file {
+            let input = std::fs::read_to_string(file).unwrap();
+            println!("{}", run_formatter(&input));
+        } else {
+            eprintln!("Need a file to format");
+        }
+    } else if let Err(e) = cli.run() {
         eprintln!("{:#}", e);
         std::process::exit(1);
     }

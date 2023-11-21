@@ -59,6 +59,7 @@ pub use name_resolution::NameResolutionError;
 pub use parser::ParseError;
 pub use registry::BaseRepresentation;
 pub use registry::BaseRepresentationFactor;
+pub use tokenizer::{tokenize, Token, TokenKind};
 pub use typed_ast::Statement;
 pub use typed_ast::Type;
 use unit_registry::UnitMetadata;
