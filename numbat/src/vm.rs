@@ -830,11 +830,40 @@ impl Vm {
                 Op::Call => {
                     let function_idx = self.read_u16() as usize;
                     let num_args = self.read_u16() as usize;
-                    self.frames.push(CallFrame {
-                        function_idx,
-                        ip: 0,
-                        fp: self.stack.len() - num_args,
-                    })
+
+                    // Tail call optimization:
+                    // - If we're calling the function we're already in
+                    // - And don't have anything left on the stack
+                    // - The function is tail recursive and we can simply jump to
+                    //   the beginning of it without spawning a new stackframe.
+                    let stack_len = self.stack.len();
+                    let current = self.current_frame_mut();
+
+                    // println!(
+                    //     "idx: {}, current fp: {}, stack_len: {}",
+                    //     function_idx, current.fp, stack_len
+                    // );
+
+                    if current.function_idx == function_idx
+                        && (current.fp + num_args * 2) == stack_len
+                    {
+                        // println!("tco hitted");
+                        current.ip = 0;
+                        let fp = current.fp;
+                        for i in 0..num_args {
+                            self.stack[fp + i] = self.stack[fp + num_args + i].clone();
+                        }
+                        for _ in 0..num_args {
+                            self.stack.pop();
+                        }
+                    } else {
+                        // println!("tco not hitted");
+                        self.frames.push(CallFrame {
+                            function_idx,
+                            ip: 0,
+                            fp: self.stack.len() - num_args,
+                        })
+                    }
                 }
                 Op::FFICallFunction | Op::FFICallProcedure => {
                     let function_idx = self.read_u16() as usize;
