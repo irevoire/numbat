@@ -166,9 +166,28 @@ impl BytecodeInterpreter {
                     // TODO: check overflow:
                     self.vm.add_op2(Op::FFICallFunction, idx, args.len() as u16);
                 } else {
-                    let idx = self.vm.get_function_idx(name);
+                    // self.vm.set_debug(true);
+                    let (idx, code) = self.vm.get_function(name);
+                    // self.vm.disassemble_function(idx as usize);
+                    // assert_eq!(*code.last().unwrap(), Op::Return as u8, "name: {name}",);
 
-                    self.vm.add_op2(Op::Call, idx, args.len() as u16); // TODO: check overflow
+                    // unwrap is safe since we ensured the len was positive right before
+                    if code.len() < 20
+                        // && name == "is_empty"
+                        && *code.last().unwrap() == Op::Return as u8
+                    {
+                        // self.vm.
+                        println!("inlining {name}");
+                        // dbg!(&code.last().unwrap());
+                        // self.vm.set_debug(true);
+                        // self.vm.disassemble();
+                        let mut code = code.to_vec();
+                        let ret = code.pop();
+                        debug_assert_eq!(ret.unwrap(), Op::Return as u8);
+                        self.vm.add_ops(code);
+                    } else {
+                        self.vm.add_op2(Op::Call, idx, args.len() as u16); // TODO: check overflow
+                    }
                 }
             }
             Expression::InstantiateStruct(_span, exprs, struct_info) => {

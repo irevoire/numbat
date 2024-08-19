@@ -384,6 +384,11 @@ impl Vm {
         Self::push_u16(current_chunk, arg3);
     }
 
+    pub fn add_ops(&mut self, mut ops: Vec<u8>) {
+        let current_chunk = self.current_chunk_mut();
+        current_chunk.append(&mut ops);
+    }
+
     pub fn current_offset(&self) -> u16 {
         self.bytecode[self.current_chunk_index].1.len() as u16
     }
@@ -452,7 +457,8 @@ impl Vm {
         self.current_chunk_index = 0;
     }
 
-    pub(crate) fn get_function_idx(&self, name: &str) -> u16 {
+    /// Return the function index and the function inner code
+    pub(crate) fn get_function<'a>(&'a self, name: &str) -> (u16, &'a [u8]) {
         // We search backwards to allow for functions
         // to be overwritten.
         let rev_position = self
@@ -463,7 +469,7 @@ impl Vm {
             .unwrap();
         let position = self.bytecode.len() - 1 - rev_position;
         assert!(position <= u16::MAX as usize);
-        position as u16
+        (position as u16, &self.bytecode[position].1)
     }
 
     pub(crate) fn add_foreign_function(&mut self, name: &str, arity: ArityRange) {
@@ -499,48 +505,56 @@ impl Vm {
         for (idx, identifier) in self.unit_information.iter().enumerate() {
             eprintln!("  {:04} {}", idx, identifier.0);
         }
-        for (idx, (function_name, bytecode)) in self.bytecode.iter().enumerate() {
-            eprintln!(".CODE {idx} ({function_name})");
-            let mut offset = 0;
-            while offset < bytecode.len() {
-                let this_offset = offset;
-                let op = bytecode[offset];
-                offset += 1;
-                let op = unsafe { std::mem::transmute::<u8, Op>(op) };
-
-                let mut operands: Vec<u16> = vec![];
-                for _ in 0..op.num_operands() {
-                    let operand =
-                        u16::from_le_bytes(bytecode[offset..(offset + 2)].try_into().unwrap());
-                    operands.push(operand);
-                    offset += 2;
-                }
-
-                let operands_str = operands
-                    .iter()
-                    .map(u16::to_string)
-                    .collect::<Vec<String>>()
-                    .join(" ");
-
-                eprint!(
-                    "  {:04} {:<13} {}",
-                    this_offset,
-                    op.to_string(),
-                    operands_str,
-                );
-
-                if op == Op::LoadConstant {
-                    eprint!("     (value: {})", self.constants[operands[0] as usize]);
-                } else if op == Op::Call {
-                    eprint!(
-                        "   ({}, num_args={})",
-                        self.bytecode[operands[0] as usize].0, operands[1] as usize
-                    );
-                }
-                eprintln!();
-            }
+        for idx in 0..self.bytecode.len() {
+            self.disassemble_function(idx);
         }
         eprintln!();
+    }
+
+    pub fn disassemble_function(&self, idx: usize) {
+        if !self.debug {
+            return;
+        }
+        let (function_name, bytecode) = &self.bytecode[idx];
+        eprintln!(".CODE {idx} ({function_name})");
+        let mut offset = 0;
+        while offset < bytecode.len() {
+            let this_offset = offset;
+            let op = bytecode[offset];
+            offset += 1;
+            let op = unsafe { std::mem::transmute::<u8, Op>(op) };
+
+            let mut operands: Vec<u16> = vec![];
+            for _ in 0..op.num_operands() {
+                let operand =
+                    u16::from_le_bytes(bytecode[offset..(offset + 2)].try_into().unwrap());
+                operands.push(operand);
+                offset += 2;
+            }
+
+            let operands_str = operands
+                .iter()
+                .map(u16::to_string)
+                .collect::<Vec<String>>()
+                .join(" ");
+
+            eprint!(
+                "  {:04} {:<13} {}",
+                this_offset,
+                op.to_string(),
+                operands_str,
+            );
+
+            if op == Op::LoadConstant {
+                eprint!("     (value: {})", self.constants[operands[0] as usize]);
+            } else if op == Op::Call {
+                eprint!(
+                    "   ({}, num_args={})",
+                    self.bytecode[operands[0] as usize].0, operands[1] as usize
+                );
+            }
+            eprintln!();
+        }
     }
 
     // The following functions are helpers for the actual execution of the code
@@ -877,11 +891,11 @@ impl Vm {
                     let callable = self.pop();
                     match callable.unsafe_as_function_reference() {
                         FunctionReference::Normal(ref name) => {
-                            let function_idx = self.get_function_idx(name) as usize;
+                            let (function_idx, _code) = self.get_function(name);
 
                             // TODO: unify code with 'Op::Call'?
                             self.frames.push(CallFrame {
-                                function_idx,
+                                function_idx: function_idx as usize,
                                 ip: 0,
                                 fp: self.stack.len() - num_args,
                             })
