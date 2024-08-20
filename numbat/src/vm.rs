@@ -831,6 +831,11 @@ impl Vm {
                     let function_idx = self.read_u16() as usize;
                     let num_args = self.read_u16() as usize;
 
+                    println!(
+                        "\ncalling {} with {num_args} arguments",
+                        self.bytecode[function_idx].0
+                    );
+
                     // Tail call optimization:
                     // - If we're calling the function we're already in
                     // - And don't have anything left on the stack
@@ -839,24 +844,25 @@ impl Vm {
                     let stack_len = self.stack.len();
                     let current = self.current_frame_mut();
 
-                    // println!(
-                    //     "idx: {}, current fp: {}, stack_len: {}",
-                    //     function_idx, current.fp, stack_len
-                    // );
-
+                    // println!("fp: {} stack len: {}", current.fp, stack_len);
                     if current.function_idx == function_idx
+                        // The argument are here once from the caller
+                        // and once as the callee
                         && (current.fp + num_args * 2) == stack_len
                     {
-                        // println!("tco hitted");
                         current.ip = 0;
                         let fp = current.fp;
+                        // println!("tco hitted");
+                        // println!("before with stack: {:?}", &self.stack[fp..]);
                         for i in 0..num_args {
                             self.stack[fp + i] = self.stack[fp + num_args + i].clone();
                         }
                         for _ in 0..num_args {
                             self.stack.pop();
                         }
+                        // println!("after with stack: {:?}", &self.stack[fp..]);
                     } else {
+                        // println!("tco missed, stack frame: {}", self.frames.len());
                         // println!("tco not hitted");
                         self.frames.push(CallFrame {
                             function_idx,

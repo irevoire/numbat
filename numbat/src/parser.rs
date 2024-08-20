@@ -2977,7 +2977,6 @@ mod tests {
             )"), @r###"
         ProcedureCall(Span { start: SourceCodePositition { byte: 0, line: 1, position: 1 }, end: SourceCodePositition { byte: 5, line: 1, position: 6 }, code_source_id: 0 }, Print, [])
         "###);
-        println!("HEEEERE");
         assert_snapshot!(snap_parse(
             "print(
               2 m,
