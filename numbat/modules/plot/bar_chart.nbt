@@ -3,10 +3,9 @@ use core::strings
 use core::lists
 use plot::common
 
-struct BarChart {
+struct BarChart<A: Dim> {
   value_label: String,
-  value_unit: String,
-  values: List<Scalar>,
+  values: List<A>,
   x_labels: List<String>,
 }
 
@@ -15,8 +14,7 @@ fn _default_label(n: Scalar) -> String = "{n}"
 fn bar_chart<A: Dim>(values: List<A>) -> BarChart =
   BarChart {
     value_label: "",
-    value_unit: unit_name(head(values)),
-    values: map(value_of, values),
+    values: values,
     x_labels: map(_default_label, range(1, len(values))),
   }
 

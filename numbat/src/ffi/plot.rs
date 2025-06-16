@@ -22,22 +22,21 @@ fn line_plot(mut args: Args) -> Plot {
     let x_unit = fields.pop().unwrap().unsafe_as_string();
     let x_label = fields.pop().unwrap().unsafe_as_string();
 
-    let x_label = format!(
-        "{x_label}{x_unit}",
-        x_unit = if x_unit.is_empty() {
-            "".into()
-        } else {
-            format!(" [{}]", x_unit)
-        }
-    );
-    let y_label = format!(
-        "{y_label}{y_unit}",
-        y_unit = if y_unit.is_empty() {
-            "".into()
-        } else {
-            format!(" [{}]", y_unit)
-        }
-    );
+    // First, find the first non-empty unit and use it to format the labels.
+    let x_unit = if x_unit.is_empty() {
+        "".into()
+    } else {
+        format!(" [{}]", x_unit)
+    };
+    let y_unit = if y_unit.is_empty() {
+        "".into()
+    } else {
+        format!(" [{}]", y_unit)
+    };
+
+    // Then, format the labels with the units.
+    let x_label = format!("{x_label}{x_unit}");
+    let y_label = format!("{y_label}{y_unit}");
 
     let xs = xs
         .unsafe_as_list()
@@ -52,16 +51,34 @@ fn line_plot(mut args: Args) -> Plot {
         .map(|e| e.unsafe_as_quantity().unsafe_value().to_f64())
         .collect::<Vec<_>>();
 
+    todo!();
     crate::plot::line_plot(xs, ys, &x_label, &y_label)
 }
 
 #[cfg(feature = "plotting")]
 fn bar_chart(mut args: Args) -> Plot {
+    use crate::unit::Unit;
+
     let mut fields = arg!(args).unsafe_as_struct_fields();
     let x_labels = fields.pop().unwrap();
-    let values = fields.pop().unwrap();
-    let value_unit = fields.pop().unwrap().unsafe_as_string();
+    let values = fields.pop().unwrap().unsafe_as_list();
+
+    // let value_unit = fields.pop().unwrap().unsafe_as_string();
     let value_label = fields.pop().unwrap().unsafe_as_string();
+
+    let value_unit = values
+        .iter()
+        .cloned()
+        .find(|e| e.clone().unsafe_as_quantity().unsafe_value().to_f64() != 0.0)
+        .map(|e| e.unsafe_as_quantity().unit().clone())
+        .unwrap_or(Unit::scalar());
+
+    // Can we make the match nice here?
+    let value_unit_repr = match &value_unit {
+        unit if unit.is_scalar() => "".into(),
+        unit => format!(" [{}]", unit),
+    };
+    let value_label = format!("{value_label}{value_unit_repr}");
 
     let x_labels = x_labels
         .unsafe_as_list()
@@ -70,21 +87,12 @@ fn bar_chart(mut args: Args) -> Plot {
         .map(|e| e.unsafe_as_string())
         .collect::<Vec<_>>();
     let values = values
-        .unsafe_as_list()
         .iter()
         .cloned()
-        .map(|e| e.unsafe_as_quantity().unsafe_value().to_f64())
+        .map(|e| e.unsafe_as_quantity().convert_to(&value_unit).unwrap().unsafe_value().to_f64())
         .collect::<Vec<_>>();
 
-    let value_label = format!(
-        "{value_label}{value_unit}",
-        value_unit = if value_unit.is_empty() {
-            "".into()
-        } else {
-            format!(" [{}]", value_unit)
-        }
-    );
-
+    //todo!();
     crate::plot::bar_chart(values, x_labels, &value_label)
 }
 
